@@ -1,0 +1,268 @@
+<!-- CHUNK 2 — continuação do body (painéis, nexus, chat, modais) -->
+
+<!-- PT + Engrenagem no rodapé do painel -->
+  <div class="panel-footer-tools">
+    <button class="panel-tool-btn" id="langBtnPanel">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/>
+        <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+      </svg>
+      <span id="langLabel">PT</span>
+    </button>
+    <button class="panel-tool-btn" id="configBtnPanel">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <circle cx="12" cy="12" r="3"/>
+        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 3.6a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+      </svg>
+      Config
+    </button>
+  </div>
+</div>
+
+<!-- PAINEL DIREITO — GalleryBob -->
+<div id="rightPanel" class="panel panel-right">
+  <div class="panel-header">
+    <span class="panel-title">Galeria</span>
+    <div style="display:flex;gap:4px;align-items:center;">
+      <button class="panel-close" id="galleryExpandBtn" title="Expandir galeria" onclick="GalleryBob.openWindow()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+      </button>
+      <button class="panel-close" id="closeRight">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+  <!-- search -->
+  <div class="search-wrap" style="margin-bottom:10px;">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <input type="text" id="gallerySearch" placeholder="Buscar arquivos..." style="border:none;background:transparent;outline:none;width:100%;font-size:13px;" oninput="GalleryBob.search(this.value)">
+  </div>
+  <!-- filtros -->
+  <div class="gb-filter-row">
+    <button class="gb-filter active" data-f="all">Tudo</button>
+    <button class="gb-filter" data-f="doc">Docs</button>
+    <button class="gb-filter" data-f="dev">DEV</button>
+  </div>
+  <!-- explorer -->
+  <div class="gb-explorer" id="gbExplorer">
+    <div class="gb-folder" data-cat="doc">
+      <div class="gb-folder-hd" onclick="GalleryBob.toggleFolder(this)">
+        <svg class="gb-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.8"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+        <span>Documentos</span>
+        <span class="gb-count" id="cnt-doc">0</span>
+      </div>
+      <div class="gb-folder-body" id="body-doc"><div class="gb-folder-empty">Nenhum arquivo</div></div>
+    </div>
+    <div class="gb-folder" data-cat="proto">
+      <div class="gb-folder-hd" onclick="GalleryBob.toggleFolder(this)">
+        <svg class="gb-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="1.8"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+        <span>DEV Protótipos</span>
+        <span class="gb-count" id="cnt-proto">0</span>
+      </div>
+      <div class="gb-folder-body" id="body-proto"><div class="gb-folder-empty">Nenhum arquivo</div></div>
+    </div>
+    <div class="gb-folder" data-cat="final">
+      <div class="gb-folder-hd" onclick="GalleryBob.toggleFolder(this)">
+        <svg class="gb-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="1.8"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+        <span>DEV Confirmados</span>
+        <span class="gb-count" id="cnt-final">0</span>
+      </div>
+      <div class="gb-folder-body" id="body-final"><div class="gb-folder-empty">Nenhum arquivo</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- GALERIA WINDOW -->
+<div id="galleryWindow" class="gw-window">
+  <iframe id="galleryFrame" src="GalleryBob.html" style="width:100%;height:100%;border:none;display:block;"></iframe>
+</div>
+
+<!-- NEXUS -->
+<div id="bobby-nexus" class="state-widget">
+  <div class="nexus-inner">
+    <main class="chat-center">
+      <div id="render-chat-container">
+
+        <div class="chat-stats-bar">
+          <div class="title-wrap">
+            <span class="session-title" id="sessionTitleText" contenteditable="true" spellcheck="false">Nova sessão</span>
+            <span class="edit-icon">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M20 14.66V20a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h5.34"/>
+                <polygon points="18 2 22 6 12 16 8 16 8 12 18 2"/>
+              </svg>
+            </span>
+          </div>
+          <div style="display:flex;align-items:center;gap:4px;">
+            <div class="chat-start-badge" style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--text-muted);">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="11" height="11"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            </div>
+            <div class="layout-btns" id="layoutBtns">
+              <button class="layout-btn active" data-layout="fullscreen">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+              </button>
+              <button class="layout-btn" data-layout="90">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="5" width="18" height="14" rx="2"/><line x1="8" y1="9" x2="16" y2="9"/></svg>
+              </button>
+              <button class="layout-btn" data-layout="centered">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="4" y="6" width="16" height="12" rx="1"/></svg>
+              </button>
+            </div>
+            <div class="clock-badge">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              <span id="clockDisplay">00:00</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="chat-messages" id="chatMessages">
+          <div class="chat-date-separator">Hoje</div>
+        </div>
+
+        <div class="chat-thinking" id="chatThinking">
+          <div class="thinking-label">Processando<span id="thinkingDots">...</span></div>
+        </div>
+
+        <div class="chat-input-zone">
+          <div class="input-float-container">
+            <div class="input-row">
+              <button class="attach-btn" id="attachBtn">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+                </svg>
+              </button>
+              <input type="file" id="fileInput" accept=".js,.py,.html,.txt,.json,.md" style="display:none;">
+              <textarea class="chat-textarea" id="chatInput" rows="1" placeholder="Digite sua mensagem..."></textarea>
+              <button class="send-btn" id="sendBtn">
+                <svg class="plane-icon" width="18" height="18" viewBox="0 0 32 32" fill="none" stroke="#0d1b2a" stroke-width="2" stroke-linejoin="round">
+                  <polygon points="2,16 30,4 22,28 16,18" fill="#0d1b2a" opacity="0.75"/>
+                  <line x1="16" y1="18" x2="21" y2="11" stroke="#0d1b2a" stroke-width="1.5"/>
+                </svg>
+              </button>
+            </div>
+            <div class="input-bottom-row">
+              <div class="bottom-left-group"><div id="powerupsBar"></div></div>
+              <div class="bottom-center-group" id="bottomCenterGroup"></div>
+              <div class="bottom-right-group"><div id="powerupsBarRight"></div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="chat-footer">
+          <div class="sentinel-wrap">
+            <div class="sentinel-dot"></div>
+            <span>Sentinela ativa</span>
+            <div class="sentinel-tip">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#c9a227" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+              <span>A IA guardiã do seu Chat!</span>
+            </div>
+          </div>
+          <span class="disclaimer" id="disclaimerBtn">Apesar do motor Bobby melhor a experiência com IA, elas continuam errando, cheque a veracidade</span>
+          <div class="token-meter">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M2 3h6a4 4 0 0 1 4 4v14"/><path d="M22 3h-6a4 4 0 0 0-4 4v14"/>
+            </svg>
+            <span id="statMsgCount">0</span> msgs
+            <div class="token-tip" id="tokenTip">hover pra ver stats</div>
+          </div>
+        </div>
+        <!-- IDs exatos do RenderChat.html — não alterar -->
+        <div class="digit-counters-footer" id="digitCountersFooter" style="display:none;">
+          <span id="statChars">0</span>
+          <span id="statTime">00:00</span>
+          <span id="statBackspace">0</span>
+          <span id="statPauses">0</span>
+        </div>
+
+        <!-- ELEMENTOS FANTASMA — RenderLab.js busca estes IDs — não alterar -->
+        <div style="display:none;">
+          <div id="providerSelector"><div id="providerList"></div><div id="modelsSubmenu"></div></div>
+          <button id="testModeBtn"></button>
+          <div id="modelName"></div>
+          <div id="logsMini"></div>
+          <div id="ctxDisplay"></div>
+          <div id="ctxBar"></div>
+          <div id="ctxValue"></div>
+          <div id="ctxUsed"></div>
+          <div id="ctxPct"></div>
+          <div id="ctxCoin"></div>
+          <div id="modelStars"></div>
+          <span id="promptPreview"></span>
+          <span id="promptStatus"></span>
+          <span id="brainBtn"><span class="brain-counter"></span></span>
+        </div>
+
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- MODAL RENDERCHAT -->
+<div id="modalRenderChat">
+  <div class="renderchat-modal">
+    <div class="renderchat-bar">
+      <span class="renderchat-bar-title">RenderChat — Configurações</span>
+      <button class="renderchat-close" id="closeRenderChat">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+    <iframe class="renderchat-iframe" id="renderChatFrame" src="" title="RenderChat"></iframe>
+  </div>
+</div>
+
+<!-- ASSINATURA no body — só desktop -->
+<div id="body-signature">Produção Marcos Eduardo — orquestrando IA Generativa.</div>
+
+<div class="modal-overlay" id="modalDisclaimer">
+  <div class="modal-box">
+    <div class="modal-bar">
+      <div class="modal-dot"></div><div class="modal-dot" style="opacity:.3"></div>
+      <span class="modal-title">Aviso</span>
+      <button class="modal-close" id="closeDisclaimer">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <p>Bobby é uma IA. Pode cometer erros, gerar informações imprecisas ou desatualizadas.</p>
+      <p>Verifique informações críticas em fontes confiáveis antes de tomar decisões.</p>
+      <p style="color:#aaa;font-size:11px;">— Mais detalhes em breve.</p>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CONFIG -->
+<div class="modal-overlay" id="modalConfig">
+  <div class="modal-box" style="max-width:320px;">
+    <div class="modal-bar">
+      <div class="modal-dot"></div>
+      <span class="modal-title">Configurações</span>
+      <button class="modal-close" id="closeConfig">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <label style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;">Idioma</label>
+      <select class="modal-select" id="langSelect">
+        <option value="pt">Português (BR)</option>
+        <option value="en">English</option>
+        <option value="es">Español</option>
+        <option value="it">Italiano</option>
+      </select>
+    </div>
+    <button class="modal-btn-close" id="closeConfigBtn">Fechar</button>
+  </div>
+</div>
+
+<!-- nota do usuário: "tá bugando. vou mandar mais ok?" — o <script> final virá no próximo chunk -->
+// FIM CHUNK 2
