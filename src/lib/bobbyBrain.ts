@@ -76,6 +76,8 @@ export interface BrainCtx {
   attachments?: Attachment[];
   linkMaps?: LinkMap[];
   typing?: { chars: number; backspaces: number; cpm: number; seconds: number };
+  /** Histórico da conversa para contexto multi-turno */
+  history?: { role: "user" | "ai"; content: string }[];
 }
 
 export interface BrainOut { text: string; proto?: Proto; sources?: Source[] }
@@ -83,9 +85,44 @@ export interface BrainOut { text: string; proto?: Proto; sources?: Source[] }
 export function bobbyReply(raw: string, ctx: BrainCtx): BrainOut {
   const s = raw.toLowerCase().trim();
   const g = greetingWord();
-  const { skills, attachments, linkMaps, typing } = ctx;
+  const { skills, attachments, linkMaps, typing, history } = ctx;
   const has = (...w: string[]) => w.some((x) => s.includes(x));
   const terse = !!typing && typing.cpm > 380;
+  
+  // Função para extrair tópicos do histórico e manter contexto
+  const getConversationContext = (): { topic: string; entity: string; lastUserQuery: string } | null => {
+    if (!history || history.length < 2) return null;
+    
+    // Pega as últimas 4 mensagens para ter mais contexto
+    const recent = history.slice(-4);
+    const userMsgs = recent.filter(m => m.role === "user").map(m => m.content.toLowerCase());
+    const aiMsgs = recent.filter(m => m.role === "ai").map(m => m.content.toLowerCase());
+    
+    if (userMsgs.length === 0) return null;
+    
+    const lastUserQuery = userMsgs[userMsgs.length - 1];
+    
+    // Tenta identificar entidade mencionada (Marcos, Render Nexus, Sentinela, etc.)
+    const entities = ["marcos", "render nexus", "sentinela", "gallerybob", "renderlab", "gateway", "pulso eterno", "bobby"];
+    const foundEntity = entities.find(e => userMsgs.some(msg => msg.includes(e)) || aiMsgs.some(msg => msg.includes(e)));
+    
+    // Tenta identificar tópico (projeto, como funciona, dificuldade, etc.)
+    const topics = ["projeto", "dificil", "difícil", "desafio", "como funciona", "arquitetura", "tecnologia", "experiencia", "contato", "mais difícil", "mais complexo"];
+    const foundTopic = topics.find(t => userMsgs.some(msg => msg.includes(t)) || aiMsgs.some(msg => msg.includes(t)));
+    
+    if (foundEntity && foundTopic) {
+      return { topic: foundTopic, entity: foundEntity, lastUserQuery };
+    }
+    if (foundEntity) {
+      return { topic: "geral", entity: foundEntity, lastUserQuery };
+    }
+    if (foundTopic) {
+      return { topic: foundTopic, entity: "marcos", lastUserQuery };
+    }
+    return null;
+  };
+  
+  const context = getConversationContext();
 
   /* ── LINKS mapeados ── */
   if (linkMaps?.length) {
@@ -200,17 +237,34 @@ Gerei uma landing page completa. Ela nasceu registrada na pasta **DEV Protótipo
   if (has("tchau", "adeus", "até mais", "ate mais", "falou", "flw", "bye"))
     return { text: `${g} de novo, agora de despedida!\n\nSuas conversas ficam salvas no painel esquerdo e o que você curtiu fica guardado na galeria, mesmo se apagar o chat. Volta quando quiser.` };
 
-  /* ══ RAG ══ */
+  /* ━━ RAG ━━ */
   if (skills.rag) {
-    const hits = RAG.retrieve(raw, 3, 0.11);
+    // Se houver contexto de conversa, adapta a query para incluir o tópico
+    let query = raw;
+    if (context) {
+      // Palavras que indicam pergunta inicial (não follow-up)
+      const questionStarters = ["qual", "quais", "como", "por que", "porque", "pq", "o que", "que", "fala", "conta", "explica", "o que é", "como funciona"];
+      const isQuestion = questionStarters.some(w => s.includes(w));
+      
+      // Palavras que indicam follow-up
+      const followUps = ["mais", "detalhe", "continua", "fala mais", "e ai", "e aí", "e o", "e a", "e as", "e os"];
+      const isFollowUp = followUps.some(w => s.includes(w)) ||
+                         s.match(/^(e|mas|então|entaum|depois|também|tambem|ainda|tudo bem|e o que|e o que mais|e a|e as|e os)/);
+      
+      if (!isQuestion && context.entity) {
+        // Para follow-ups, mantém o contexto da entidade
+        query = `${raw} ${context.entity}`;
+      }
+    }
+    
+    const hits = RAG.unifiedRetrieve(query, 3, 0.11);
     if (hits.length) {
       const sources: Source[] = hits.map((h) => ({ title: h.title, docId: h.docId, score: h.score }));
       const body = hits.map((h) => h.text).join("\n\n");
-      const lead = terse ? "Direto da base:" : leadFor(raw, hits[0].docId, skills.humor);
+      const lead = terse ? "Direto da base:" : leadFor(query, hits[0].docId, skills.humor);
       return { text: `${lead}\n\n${body}`, sources };
     }
   }
-
   /* ── primeiro contato ── */
   if (ctx.msgCount <= 1) {
     return {
