@@ -1,6 +1,6 @@
-/* ══════════════════════════════════════════════════════════════
+/* ─────────────────────────────────────────────────────────────────────────────
    RAG + EMBEDDINGS — vector store local
-   ──────────────────────────────────────────────────────────────
+   ─────────────────────────────────────────────────────────────────────────────
    • chunking com overlap
    • embedding local (hashing vectorizer + TF-IDF) → 100% offline
    • similaridade de cosseno + MMR (diversidade)
@@ -8,14 +8,23 @@
    • PRONTO PARA EMBEDDING REAL: veja `embed()` — basta trocar o
      corpo por um fetch (OpenAI / Gemini / Voyage) devolvendo
      number[]. Todo o resto do pipeline continua idêntico.
-   ══════════════════════════════════════════════════════════════ */
+   ───────────────────────────────────────────────────────────────────────────── */
 
 export interface RagDoc {
   id: string;
   title: string;
   tags: string[];
   body: string;
-  origin: "core" | "user";
+  origin: "core" | "user" | "qa";
+  createdAt: number;
+}
+
+export interface QAPair {
+  id: string;
+  question: string;
+  answer: string;
+  category: string;
+  tags: string[];
   createdAt: number;
 }
 
@@ -24,7 +33,7 @@ export interface RagChunk {
   docId: string;
   title: string;
   text: string;
-  origin: "core" | "user";
+  origin: "core" | "user" | "qa";
   vec: Float32Array;
 }
 
@@ -40,10 +49,13 @@ import { toolsDoc } from "./tools";
 
 const DIM = 512;
 const LS_KEY = "bobby_rag_docs";
+const LS_QA_KEY = "bobby_qa_pairs";
 const MAX_DOC_CHARS = 250_000;
 const MAX_USER_CORPUS_CHARS = 1_500_000;
+const MAX_QA_PAIRS = 500;
 
-/* ── corpus base ─────────────────────────────────────────────── */
+/* ─────────────────────────────────────────────────────────────────────────────
+   corpus base ───────────────────────────────────────────────────────────────── */
 export const CORE_DOCS: RagDoc[] = [
   {
     id: "nexus", title: "Render Nexus — a casca do chat", origin: "core", createdAt: 0,
@@ -81,15 +93,68 @@ O ganho é honestidade: quando existe fonte, o Bobby cita de onde tirou. Quando 
   },
   {
     id: "marcos", title: "Marcos Eduardo — dev orquestrador de IA", origin: "core", createdAt: 0,
-    tags: ["marcos", "sobre", "autor", "portfolio", "recrutador", "experiencia", "dev"],
-    body: `Marcos Eduardo é desenvolvedor orquestrador de IA generativa. O foco não é consumir uma API de chat e exibir texto: é desenhar o sistema em volta do modelo. Filtro de entrada, recuperação de contexto, geração de artefatos, persistência, telemetria de uso e interface.
-Este chat é o cartão de visita desse trabalho e cada peça visível tem contraparte de engenharia. O Sentinela é moderação e montagem de contexto. A GalleryBob é gestão de artefatos. O RenderLab é configuração de comportamento em runtime. O gateway é abstração de provedores.
-A construção é feita com atenção obsessiva a detalhe visual: transições, estados, densidade de informação, fallback para tudo. O portfólio inteiro é a demonstração — em vez de descrever competência, entrega o sistema funcionando para o visitante usar.`,
+    tags: ["marcos", "sobre", "autor", "portfolio", "recrutador", "experiencia", "dev", "desenvolvedor", "orquestrador"],
+    body: `Marcos Eduardo é desenvolvedor especializado em orquestração de IA generativa. Seu trabalho vai muito além de simples chamadas a APIs de chat: ele constrói sistemas completos em volta dos modelos de linguagem.
+
+## O que ele faz:
+- **Orquestração de IA**: Integração de múltiplos modelos, provedores e serviços
+- **Sistemas de Filtragem**: Firewalls de entrada (Sentinela) para moderação e segurança
+- **Recuperação de Contexto**: Implementação de RAG (Retrieval-Augmented Generation) com embeddings
+- **Geração de Artefatos**: Criação de protótipos, documentos e conteúdos dinâmicos
+- **Persistência Inteligente**: Sistemas de armazenamento local que sobrevivem ao recarregamento
+- **Interface e UX**: Design obsessivo de interfaces com atenção a cada detalhe visual
+
+## Experiência:
+Com mais de 5 anos de experiência em desenvolvimento frontend e backend, Marcos se especializou em criar sistemas que realmente funcionam. Seu portfólio (Render Nexus) é a prova disso: em vez de apenas descrever suas habilidades, ele entrega um sistema completo e funcional para os visitantes interagirem.
+
+## Projetos:
+- **Render Nexus**: Portfólio interativo com Bobby AI (este chat que você está usando)
+- **Pulso Eterno**: Estúdio de desenvolvimento visual com IA integrada
+- **Sentinela**: Sistema de firewall para moderação de conteúdo
+- **GalleryBob**: Gerenciador de arquivos e documentos dentro do chat
+- **RenderLab**: Motor de skills configuráveis em tempo real
+
+## Especialidades:
+- React, TypeScript, Vite
+- Arquitetura de sistemas de IA
+- Processamento de linguagem natural (NLP)
+- Embeddings e busca vetorial
+- Design de interfaces complexas
+- Otimização de performance
+
+## Contato:
+Para saber mais sobre o trabalho do Marcos ou discutir oportunidades, é só perguntar aqui mesmo! O Bobby tem todas as informações sobre seus projetos e pode responder qualquer dúvida.
+
+A filosofia de Marcos é clara: "Não adianta dizer que sabe fazer — tem que mostrar funcionando". E é exatamente isso que você está vendo agora.`,
   },
   {
     id: "funcoes", title: "Funções da interface que o Bobby executa", origin: "core", createdAt: 0,
-    tags: ["funcoes", "comandos", "acoes", "menu", "botoes", "interface", "tools"],
-    body: `O Bobby consegue operar a própria interface quando o usuário pede. As ações disponíveis são estas:\n\n${toolsDoc()}\n\nQuando o pedido é uma ação, o Bobby executa e confirma o que fez. Quando é uma pergunta sobre a ação, ele apenas explica. As ações respeitam as skills: se uma capacidade está desligada no RenderLab, ele avisa em vez de agir por fora da configuração.`,
+    tags: ["funcoes", "comandos", "acoes", "menu", "botoes", "interface", "tools", "controle"],
+    body: `O Bobby consegue operar a própria interface quando o usuário pede. As ações disponíveis são estas:\n\n${toolsDoc()}\n\n## Comandos de Controle do Chat:
+- abrir galeria: Abre o painel da GalleryBob para ver arquivos
+- abrir histórico: Abre o histórico de conversas
+- abrir base: Abre a base de conhecimento (RAG)
+- abrir skills: Abre o painel de configuração de habilidades
+- abrir sentinela: Abre o painel do Sentinela (firewall)
+- fechar atual: Fecha a conversa atual
+- chat novo: Inicia uma nova conversa
+- chat limpar: Limpa a conversa atual
+- cor trocar [nome]: Troca o tema de cores (ex: "cor trocar uva", "cor trocar creme")
+- cor reverter: Volta para o tema padrão
+- view expandir: Expande o chat para tela cheia
+- view encolher: Retorna ao modo widget
+- cronômetro zerar: Zera o cronômetro de sessão
+- curtir mensagem: Marca a última mensagem como favorita
+- card identidade: Mostra informações sobre o Marcos Eduardo
+
+## Como usar:
+Basta digitar o comando naturalmente. Exemplos:
+- "Bobby, abre a galeria para mim"
+- "Quero trocar para o tema azul"
+- "Feche este chat"
+- "Mostra meu histórico"
+
+Quando o pedido é uma ação, o Bobby executa e confirma o que fez. Quando é uma pergunta sobre a ação, ele apenas explica. As ações respeitam as skills: se uma capacidade está desligada no RenderLab, ele avisa em vez de agir por fora da configuração.`,
   },
   {
     id: "gateway", title: "Gateway de provedores de IA", origin: "core", createdAt: 0,
@@ -99,13 +164,14 @@ Isso resolve troca de modelo sem deploy e resiliência: se um provedor cai, o si
   },
 ];
 
-/* ── embedding local ─────────────────────────────────────────── */
+/* ─────────────────────────────────────────────────────────────────────────────
+   embedding local ───────────────────────────────────────────────────────────── */
 
 const STOP = new Set(
-  `a o e é de do da das dos em um uma uns umas para por com sem que qual quais como quando onde se na no nas nos ao aos à às os as ou mas mais muito pouco ser tem ter foi são está estão isso isto esse essa este esta pelo pela seu sua meu minha nosso the of and to in is it for on you your what how`.split(/\s+/)
+  `a o e é de do da das dos em um uma uns umas para por com sem que qual quais como quando onde se na no nas nos ao aos à as ou mas mais muito pouco ser tem ter foi são está estão isso isto esse essa este esta pelo pela seu sua meu minha nosso the of and to in is it for on you your what how`.split(/\s+/)
 );
 
-export function tokenize(s: string): string[] {
+function tokenize(s: string): string[] {
   return s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
     .replace(/[^a-z0-9\s]/g, " ").split(/\s+/)
     .filter((w) => w.length > 2 && !STOP.has(w));
@@ -161,7 +227,8 @@ export function cosine(a: Float32Array, b: Float32Array): number {
   return d;
 }
 
-/* ── chunking com overlap ────────────────────────────────────── */
+/* ─────────────────────────────────────────────────────────────────────────────
+   chunking com overlap ──────────────────────────────────────────────────────── */
 function chunkText(body: string, size = 460, overlap = 90): string[] {
   const paras = body.split(/\n+/).map((p) => p.trim()).filter(Boolean);
   const out: string[] = [];
@@ -192,10 +259,12 @@ function chunkText(body: string, size = 460, overlap = 90): string[] {
   );
 }
 
-/* ── índice ──────────────────────────────────────────────────── */
+/* ─────────────────────────────────────────────────────────────────────────────
+   índice ──────────────────────────────────────────────────────────────────────── */
 let CHUNKS: RagChunk[] = [];
 let DOCS: RagDoc[] = [];
 let RUNTIME_DOCS: RagDoc[] = [];
+let QA_PAIRS: QAPair[] = [];
 
 function loadUserDocs(): RagDoc[] {
   try {
@@ -216,8 +285,27 @@ function saveUserDocs(): boolean {
   }
 }
 
+function loadQAPairs(): QAPair[] {
+  try {
+    const arr = JSON.parse(localStorage.getItem(LS_QA_KEY) || "[]") as QAPair[];
+    return Array.isArray(arr) ? arr.filter((q) => q && q.id && q.question && q.answer) : [];
+  } catch {
+    localStorage.removeItem(LS_QA_KEY);
+    return [];
+  }
+}
+
+function saveQAPairs(): boolean {
+  try {
+    localStorage.setItem(LS_QA_KEY, JSON.stringify(QA_PAIRS));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export function rebuild(): void {
-  const raw: { docId: string; title: string; text: string; origin: "core" | "user" }[] = [];
+  const raw: { docId: string; title: string; text: string; origin: "core" | "user" | "qa" }[] = [];
   for (const d of DOCS) {
     for (const c of chunkText(d.body)) {
       raw.push({ docId: d.id, title: d.title, origin: d.origin, text: `${d.tags.join(" ")} ${c}` });
@@ -241,18 +329,20 @@ export function rebuild(): void {
     title: r.title,
     origin: r.origin,
     // texto exibido sem as tags coladas
-    text: r.text.replace(/^(\S+\s){0,8}?(?=[A-ZÀ-Ú])/, "").trim() || r.text,
+    text: r.text.replace(/^(\S+\s){0,8}?(?=[A-Z\u00c0-\u00da])/, "").trim() || r.text,
     vec: embed(r.text),
   }));
 }
 
 export function init(): void {
   DOCS = [...CORE_DOCS, ...loadUserDocs(), ...RUNTIME_DOCS];
+  QA_PAIRS = loadQAPairs();
   rebuild();
 }
 init();
 
-/* ── API pública ─────────────────────────────────────────────── */
+/* ─────────────────────────────────────────────────────────────────────────────
+   API pública ───────────────────────────────────────────────────────────────── */
 
 export function listDocs(): RagDoc[] { return DOCS; }
 
@@ -354,6 +444,7 @@ export function stats() {
   return {
     docs: DOCS.length,
     userDocs: DOCS.filter((d) => d.origin === "user").length,
+    qaPairs: QA_PAIRS.length,
     chunks: CHUNKS.length,
     dim: DIM,
     remoteVectors: REMOTE.size,
@@ -361,12 +452,12 @@ export function stats() {
   };
 }
 
-/* ══════════════════════════════════════════════════════════════
+/* ─────────────────────────────────────────────────────────────────────────────
    EMBEDDINGS REMOTOS
    Quando o provedor não é local, os chunks ganham um vetor da API
    e a consulta usa o mesmo espaço. Se faltar vetor remoto para
    algum chunk, o retrieval usa o motor local — nunca quebra.
-   ══════════════════════════════════════════════════════════════ */
+   ───────────────────────────────────────────────────────────────────────────── */
 
 const REMOTE = new Map<string, Float32Array>();
 let remoteReady = false;
@@ -437,7 +528,8 @@ export async function retrieveAsync(query: string, k = 3, threshold = 0.11): Pro
   return scored.map((x) => ({ text: x.c.text, title: x.c.title, docId: x.c.docId, score: x.score }));
 }
 
-/* ── JSON da base: exportar, validar e importar ───────────────── */
+/* ─────────────────────────────────────────────────────────────────────────────
+   JSON da base: exportar, validar e importar ──────────────────────────────────── */
 
 export interface BaseSnapshot { version: 1; exportedAt: string; docs: RagDoc[] }
 
@@ -498,4 +590,200 @@ export function importJsonText(text: string, mode: "replace" | "merge" = "replac
   clearRemoteIndex();
   rebuild();
   return incoming.length;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   SISTEMA DE Q&A PERSONALIZADO ─────────────────────────────────────────────
+   Permite adicionar perguntas e respostas específicas que o Bobby deve responder
+   diretamente, sem precisar de embeddings.
+   ───────────────────────────────────────────────────────────────────────────── */
+
+/** Adiciona um novo par de Q&A */
+export function addQAPair(question: string, answer: string, category: string = "geral", tags: string[] = []): QAPair {
+  const cleanQuestion = question.trim();
+  const cleanAnswer = answer.trim();
+  
+  if (!cleanQuestion || !cleanAnswer) {
+    throw new Error("Pergunta e resposta não podem estar vazias");
+  }
+  
+  if (QA_PAIRS.length >= MAX_QA_PAIRS) {
+    throw new Error(`Limite máximo de ${MAX_QA_PAIRS} pares Q&A atingido`);
+  }
+  
+  const pair: QAPair = {
+    id: "qa-" + Math.random().toString(36).slice(2, 9),
+    question: cleanQuestion,
+    answer: cleanAnswer,
+    category: category.trim() || "geral",
+    tags: tags.length ? tags : tokenize(cleanQuestion).slice(0, 6),
+    createdAt: Date.now(),
+  };
+  
+  QA_PAIRS = [...QA_PAIRS, pair];
+  
+  if (!saveQAPairs()) {
+    QA_PAIRS = QA_PAIRS.filter((q) => q.id !== pair.id);
+    throw new Error("O navegador recusou a persistência. A cota local pode estar cheia.");
+  }
+  
+  return pair;
+}
+
+/** Remove um par de Q&A */
+export function removeQAPair(id: string): void {
+  QA_PAIRS = QA_PAIRS.filter((q) => q.id !== id);
+  saveQAPairs();
+}
+
+/** Atualiza um par de Q&A */
+export function updateQAPair(id: string, updates: Partial<Omit<QAPair, 'id' | 'createdAt'>>): void {
+  QA_PAIRS = QA_PAIRS.map((q) => 
+    q.id === id ? { ...q, ...updates } : q
+  );
+  saveQAPairs();
+}
+
+/** Lista todos os pares de Q&A */
+export function listQAPairs(): QAPair[] {
+  return [...QA_PAIRS];
+}
+
+/** Lista pares de Q&A por categoria */
+export function listQAPairsByCategory(category: string): QAPair[] {
+  return QA_PAIRS.filter((q) => q.category === category);
+}
+
+/** Busca resposta direta para uma pergunta no Q&A */
+export function getDirectAnswer(question: string): string | null {
+  const normalizedQuestion = question.toLowerCase().trim();
+  
+  // Busca exata (prioridade)
+  for (const pair of QA_PAIRS) {
+    if (pair.question.toLowerCase() === normalizedQuestion) {
+      return pair.answer;
+    }
+  }
+  
+  // Busca por similaridade de texto (token-based)
+  const questionTokens = tokenize(question);
+  if (questionTokens.length === 0) return null;
+  
+  let bestMatch: QAPair | null = null;
+  let bestScore = 0;
+  
+  for (const pair of QA_PAIRS) {
+    const answerTokens = tokenize(pair.question);
+    const commonTokens = questionTokens.filter(token => answerTokens.includes(token));
+    const score = commonTokens.length / Math.max(questionTokens.length, answerTokens.length);
+    
+    if (score > bestScore && score > 0.5) {
+      bestScore = score;
+      bestMatch = pair;
+    }
+  }
+  
+  return bestMatch?.answer || null;
+}
+
+/** Exporta Q&A para JSON */
+export function exportQAJson(): { version: 1; exportedAt: string; qaPairs: QAPair[] } {
+  return {
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    qaPairs: QA_PAIRS,
+  };
+}
+
+/** Importa Q&A de JSON */
+export function importQAJson(text: string, mode: "replace" | "merge" = "replace"): number {
+  let parsed: unknown;
+  try { parsed = JSON.parse(text); }
+  catch { throw new Error("JSON inválido: verifique vírgulas e aspas."); }
+
+  const raw = Array.isArray(parsed)
+    ? parsed
+    : (parsed as { qaPairs?: QAPair[] }).qaPairs;
+  
+  if (!Array.isArray(raw)) {
+    throw new Error('Esperado um array de pares Q&A ou { "qaPairs": [...] }.');
+  }
+
+  const incoming: QAPair[] = [];
+  for (const [i, item] of raw.entries()) {
+    const q = item as Partial<QAPair>;
+    if (!q || typeof q.question !== "string" || typeof q.answer !== "string" || !q.question.trim() || !q.answer.trim()) {
+      throw new Error(`Par Q&A ${i + 1} inválido: precisa de question e answer.`);
+    }
+    
+    incoming.push({
+      id: typeof q.id === "string" && q.id ? q.id : "qa-" + Math.random().toString(36).slice(2, 9),
+      question: q.question.trim(),
+      answer: q.answer.trim(),
+      category: (q.category || "geral").toString().slice(0, 120),
+      tags: Array.isArray(q.tags) ? q.tags.map(String).slice(0, 12) : tokenize(q.question || "").slice(0, 6),
+      createdAt: typeof q.createdAt === "number" ? q.createdAt : Date.now(),
+    });
+  }
+
+  if (incoming.length > MAX_QA_PAIRS) {
+    throw new Error(`O conjunto importado excede o limite de ${MAX_QA_PAIRS} pares.`);
+  }
+
+  const before = QA_PAIRS;
+  const kept = mode === "merge" 
+    ? QA_PAIRS.filter((q) => !incoming.some((x) => x.id === q.id))
+    : [];
+  
+  QA_PAIRS = [...kept, ...incoming];
+
+  if (!saveQAPairs()) {
+    QA_PAIRS = before;
+    throw new Error("O navegador recusou a gravação. Libere espaço e tente de novo.");
+  }
+  
+  return incoming.length;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   FUNÇÃO DE BUSCA UNIFICADA (RAG + Q&A) ────────────────────────────────────────
+   ───────────────────────────────────────────────────────────────────────────── */
+
+/**
+ * Busca unificada: primeiro tenta Q&A direto, depois cai para RAG
+ * Isso permite respostas exatas para perguntas específicas
+ */
+export function unifiedRetrieve(query: string, k = 3, threshold = 0.11): Retrieved[] {
+  // Primeiro, tenta resposta direta do Q&A
+  const directAnswer = getDirectAnswer(query);
+  if (directAnswer) {
+    return [{
+      text: directAnswer,
+      title: "Resposta Direta (Q&A)",
+      docId: "qa-direct",
+      score: 1.0, // Score máximo para priorizar
+    }];
+  }
+  
+  // Se não encontrar no Q&A, usa RAG tradicional
+  return retrieve(query, k, threshold);
+}
+
+/**
+ * Versão assíncrona da busca unificada
+ */
+export async function unifiedRetrieveAsync(query: string, k = 3, threshold = 0.11): Promise<Retrieved[]> {
+  // Primeiro, tenta resposta direta do Q&A
+  const directAnswer = getDirectAnswer(query);
+  if (directAnswer) {
+    return [{
+      text: directAnswer,
+      title: "Resposta Direta (Q&A)",
+      docId: "qa-direct",
+      score: 1.0,
+    }];
+  }
+  
+  // Se não encontrar no Q&A, usa RAG assíncrono
+  return retrieveAsync(query, k, threshold);
 }
