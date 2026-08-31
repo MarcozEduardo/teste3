@@ -1783,7 +1783,6 @@ export default function PulsoStudio({ onClose }: { onClose: () => void }) {
           onClose={() => setShowRagConfig(false)} 
         />
       )}
-      <RagConfigButton />
     </div>,
     document.body
   );

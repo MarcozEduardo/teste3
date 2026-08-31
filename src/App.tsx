@@ -7,6 +7,7 @@ import GalleryWindow from "./components/GalleryWindow";
 import SiteViewer from "./components/SiteViewer";
 import PrankModal from "./components/PrankModal";
 import PulsoStudio from "./pulso-eterno/PulsoStudio";
+import RagConfigButton from "./pulso-eterno/RagConfigButton";
 import "./pulso-eterno/studio.css";
 import Chat from "./components/Chat";
 import Modals from "./components/Modals";
@@ -117,6 +118,7 @@ function Shell() {
       <StudioLauncher />
       <ApiFab />
       <StorageWarning />
+      <RagConfigButton />
       <div id="body-signature">Produção Marcos Eduardo — orquestrando IA Generativa.</div>
     </>
   );
