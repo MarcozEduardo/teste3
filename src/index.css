@@ -1732,6 +1732,22 @@ body.code-editing .editing-flag { display: flex; }
 .api-fab:hover { background: var(--navy); color: var(--gold-light); transform: translateY(-2px); }
 .api-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--text-muted); }
 .api-fab.ok .api-dot { background: var(--green); box-shadow: 0 0 0 3px rgba(16,185,129,.2); }
+
+/* ══ RAG BUTTON ══ */
+.rag-fab {
+  position: fixed; left: 140px; bottom: 20px; z-index: 12500;
+  display: flex; align-items: center; gap: 6px; padding: 9px 15px;
+  border-radius: 99px; border: 1.5px solid #16a34a; background: var(--surface-solid);
+  font-family: 'Inter', sans-serif; font-size: 11.5px; font-weight: 700;
+  letter-spacing: .05em; color: #16a34a; cursor: pointer;
+  box-shadow: 0 6px 20px rgba(0,0,0,.14); transition: var(--t);
+}
+.rag-fab:hover { 
+  background: linear-gradient(135deg, #16a34a, #059669); 
+  color: #fff; 
+  transform: translateY(-2px); 
+}
+.rag-dot { width: 6px; height: 6px; border-radius: 50%; background: #16a34a; box-shadow: 0 0 0 3px rgba(22,163,74,.25); }
 .storage-warning {
   position: fixed; left: 50%; bottom: 22px; z-index: 50000;
   transform: translateX(-50%); width: min(520px, calc(100vw - 32px));

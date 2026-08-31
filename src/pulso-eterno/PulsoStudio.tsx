@@ -343,9 +343,6 @@ export default function PulsoStudio({ onClose }: { onClose: () => void }) {
     const el = document.querySelector(n.selector);
     if (!el) { flash("O elemento não está na tela agora."); return; }
 
-    {" "/>
-    {" "/>
-    <RagConfigWindow />
     document.body.classList.add("pe-locating");
     el.scrollIntoView({ block: "center", behavior: "smooth" });
 

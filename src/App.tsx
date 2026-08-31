@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { KeyRound } from "lucide-react";
+import { KeyRound, Brain } from "lucide-react";
 import { BobbyProvider, useBobby } from "./lib/store";
 import Island from "./components/Island";
 import { SideButtons, LeftPanel, RightPanel } from "./components/Panels";
@@ -8,6 +8,7 @@ import SiteViewer from "./components/SiteViewer";
 import PrankModal from "./components/PrankModal";
 import PulsoStudio from "./pulso-eterno/PulsoStudio";
 import RagConfigButton from "./pulso-eterno/RagConfigButton";
+import RagConfigWindow from "./pulso-eterno/RagConfigWindow";
 import "./pulso-eterno/studio.css";
 import Chat from "./components/Chat";
 import Modals from "./components/Modals";
@@ -33,6 +34,27 @@ function ApiFab() {
       API
       <span className="api-dot" />
     </button>
+  );
+}
+
+/** Botão flutuante RAG - Configuração completa do RAG */
+function RagFab() {
+  const [isOpen, setIsOpen] = useState(false);
+  return (
+    <>
+      <button 
+        className="rag-fab" 
+        onClick={() => setIsOpen(true)} 
+        title="Configurar RAG · Memórias e Capacidades"
+      >
+        <Brain size={14} strokeWidth={2} />
+        RAG
+        <span className="rag-dot" />
+      </button>
+      {isOpen && (
+        <RagConfigWindow isOpen={isOpen} onClose={() => setIsOpen(false)} />
+      )}
+    </>
   );
 }
 
@@ -117,8 +139,8 @@ function Shell() {
       <PrankModal />
       <StudioLauncher />
       <ApiFab />
+      <RagFab />
       <StorageWarning />
-      <RagConfigButton />
       <div id="body-signature">Produção Marcos Eduardo — orquestrando IA Generativa.</div>
     </>
   );
