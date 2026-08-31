@@ -14,6 +14,9 @@ import {
   KIND_META, type PulsoMap, type OrbitNode, type OrbitKind, type Bubble,
 } from "./core";
 import TextWindow from "./TextWindow";
+import "./RagConfig.css";
+import RagConfigWindow from "./RagConfigWindow";
+import RagConfigButton from "./RagConfigButton";
 import { scanDom, scanSource, startPicker, type Found } from "./scanner";
 import { helpFor } from "./help";
 import {
@@ -340,6 +343,9 @@ export default function PulsoStudio({ onClose }: { onClose: () => void }) {
     const el = document.querySelector(n.selector);
     if (!el) { flash("O elemento não está na tela agora."); return; }
 
+    {" "/>
+    {" "/>
+    <RagConfigWindow />
     document.body.classList.add("pe-locating");
     el.scrollIntoView({ block: "center", behavior: "smooth" });
 
@@ -1771,6 +1777,13 @@ export default function PulsoStudio({ onClose }: { onClose: () => void }) {
       )}
 
       {toast && <div className="pe-toast">{toast}</div>}
+      {showRagConfig && (
+        <RagConfigWindow 
+          isOpen={showRagConfig} 
+          onClose={() => setShowRagConfig(false)} 
+        />
+      )}
+      <RagConfigButton />
     </div>,
     document.body
   );
